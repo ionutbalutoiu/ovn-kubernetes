@@ -23,6 +23,49 @@
   set_fact:
     interface_name: "{{ ansible_default_ipv4.alias }}"
 
+- name: get physical interface name
+  register: cmd_output
+  shell: |
+    set -o pipefail
+    ovs-vsctl br-exists "{{ interface_name }}"
+    if [[ $? -eq 2 ]]; then
+        # OVS Bridge is not present yet
+        echo "{{ interface_name }}"
+        exit 0
+    elif [[ $? -ne 0 ]]; then
+        echo "ERROR: Failed to run 'ovs-vsctl br-exists {{ interface_name }}'"
+        exit 1
+    fi
+    # If we reach this far, it means that the OVS bridge is created and we
+    # need to find out the physical network adapter from it.
+    BRIDGE_NICS=$(ovs-vsctl list-ifaces "{{ interface_name }}")
+    if [[ $? -ne 0 ]]; then
+        echo "ERROR: Failed to list interfaces from OVS bridge {{ interface_name }}"
+        exit 1
+    fi
+    PHYSICAL_NIC_NAME=$(comm -12 <(echo $BRIDGE_NICS | tr ' ', '\n' | sort | uniq) \
+                                 <(echo -e "{{ ansible_interfaces | join('\n') }}" | sort | uniq)
+    if [[ $? -ne 0 ]]; then
+        echo "ERROR: Failed to compare NIC names via comm tool"
+        exit 1
+    fi
+    if [[ $(echo $PHYSICAL_NIC_NAME | tr ' ', '\n' | wc -l) -ne 1 ]]; then
+        echo "ERROR: Multiple physical NICs were found in the OVS bridge  {{ interface_name }}"
+        exit 1
+    fi
+    echo $PHYSICAL_NIC_NAME
+  args:
+    executable: /bin/bash
+
+- name: set physical interface name fact
+  set_fact:
+    physical_interface_name: "{{ cmd_output.stdout | trim }}"
+
+- debug: var=physical_interface_name
+
+- name: Stop here
+  shell: exit 1
+
 - name: set interface gateway
   set_fact:
     interface_gateway: "{{ ansible_default_ipv4.gateway }}"
