@@ -10,6 +10,7 @@ ansible_winrm_server_cert_validation: ignore
 master: false
 minion: true
 controller: false
+tester: false
 
 docker_version: 18.03.1-ee-3
 # install_path: where kubernetes binaries and CNI plugin will be installed

@@ -2,6 +2,8 @@
 master: false
 # the minion nodes will overwrite this value
 minion: false
+# the tester nodes will overwrite this value
+tester: false
 
 # Timeout variable for OVS/OVN commands in seconds
 TIMEOUT : 15

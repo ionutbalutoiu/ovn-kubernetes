@@ -1,0 +1,19 @@
+---
+- name: Kubernetes Tester | Include vars
+  include_vars: "{{ ansible_distribution | lower }}.yml"
+
+- name: Kubernetes Tester | Include global vars
+  include_vars: "{{ ansible_tmp_dir }}/generated_global_vars.yml"
+  when: not master
+
+- name: Kubernetes Tester | Setup Golang and Kubectl
+  include_role:
+    name: linux/common
+    tasks_from: "{{ item }}"
+  with_items:
+    - "golang"
+    - "kubectl_client"
+
+#
+# TODO: Add remaining tasks here if needed
+#

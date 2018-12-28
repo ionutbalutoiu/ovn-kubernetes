@@ -124,3 +124,15 @@
   tasks:
     - import_role:
         name: windows/validation
+
+- hosts: kube-tester
+  any_errors_fatal: true
+  gather_facts: true
+  become: true
+  tasks:
+    - import_role:
+        name: linux/version_check
+    - import_role:
+        name: linux/docker
+    - import_role:
+        name: linux/tester
